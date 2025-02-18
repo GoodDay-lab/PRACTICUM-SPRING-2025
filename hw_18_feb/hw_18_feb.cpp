@@ -103,7 +103,10 @@ using namespace std;
 */
 
 // struct mystr {
-//     const int a, b;                 // В таком случае мы не можем проинициализировать структуру mystr конструктором `по умолчанию`
+//     int a, b;                 // В таком случае мы не можем проинициализировать структуру mystr конструктором `по умолчанию`
+//     mystr(){};
+// private:
+//     mystr(mystr &){};
 // };
 
 // int i = sizeof(mystr);
@@ -114,6 +117,8 @@ using namespace std;
 
 // int main()
 // {
+//     mystr t;
+//     f(t);
 //     cout << i << endl;
 //     return 0;
 // }
