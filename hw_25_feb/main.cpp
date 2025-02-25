@@ -81,9 +81,8 @@ public:
         printf("%0.2d:%0.2d:%0.2d %0.2d/%0.2d/%0.4d\n", t[0], t[1], t[2], d[0], d[1], d[2]);
     }
 
-    friend DateTimeSpan &operator-(const DateTime &d1, const DateTime &d2) {
-        DateTimeSpan ret(d1.getReal() - d2.getReal());
-        return ret;
+    friend DateTimeSpan operator-(const DateTime &d1, const DateTime &d2) {
+        return DateTimeSpan(d1.getReal() - d2.getReal());
     }
 
     DateTime &operator+(const DateTimeSpan &s1) {
@@ -184,7 +183,8 @@ void DateTimeSpan::getTime(i32 *To) const {
 
 int main() {
     DateTime dt1(23, 1, 1970, 23, 59, 59);
-    DateTime dt2(23, 2, 1970, 23, 59, 59);
+    DateTime dt2(23, 1, 1971, 23, 59, 59);
+
     DateTimeSpan ds(1, 1, 3, 0);
     DateTimeSpan dl = dt2 - dt1;
     DateTimeSpan dl1 = dl-ds;
