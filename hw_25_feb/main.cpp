@@ -32,19 +32,17 @@ class DateTimeSpan {
             printf("%d days %0.2d:%0.2d:%0.2d\n", t[0], t[1], t[2], t[3]);
         }
 
-        DateTimeSpan &operator-() {
+        DateTimeSpan& operator- () {
             time = -time;
             return *this;
         }
 
-        DateTimeSpan &operator+(const DateTimeSpan& s) {
-            time += s.time;
-            return *this;
+        DateTimeSpan operator+ (const DateTimeSpan& s) {
+            return DateTimeSpan(time + s.time);
         }
 
-        DateTimeSpan &operator-(const DateTimeSpan& s) {
-            time -= s.time;
-            return *this;
+        DateTimeSpan operator- (const DateTimeSpan& s) {
+            return DateTimeSpan(time - s.time);
         }
     };
 
@@ -81,21 +79,20 @@ public:
         printf("%0.2d:%0.2d:%0.2d %0.2d/%0.2d/%0.4d\n", t[0], t[1], t[2], d[0], d[1], d[2]);
     }
 
-    friend DateTimeSpan operator-(const DateTime &d1, const DateTime &d2) {
+    friend DateTimeSpan operator- (const DateTime& d1, const DateTime& d2) {
         return DateTimeSpan(d1.getReal() - d2.getReal());
     }
 
-    DateTime &operator+(const DateTimeSpan &s1) {
+    DateTime& operator+ (const DateTimeSpan& s1) {
         time += s1.getReal();
         return *this;
     }
 
-    DateTime &operator-(const DateTimeSpan &s1) {
+    DateTime& operator- (const DateTimeSpan& s1) {
         time += s1.getReal();
         return *this;
     }
 };
-
 
 DateTime::DateTime(u32 d, u32 mo, u32 y, u32 h, u32 mi, u32 s)
 {
@@ -110,7 +107,7 @@ DateTime::DateTime(u32 d, u32 mo, u32 y, u32 h, u32 mi, u32 s)
     }
 
     while (mo != 1) {
-        mo -= 1; time += getMonthDays(mo-1, y);
+        mo -= 1; time += getMonthDays(mo, y);
     }
 
     while (d != 1) {
@@ -139,7 +136,7 @@ void DateTime::getTime(u32 *To) const {
     To[2] = time_int % 60;
 }
 
-void DateTime::getDate(u32 *To) const {
+void DateTime::getDate(u32* To) const {
     i64 date_part = floor(time);
     u32 d = 0, m = 0, y = 2000;
 
@@ -169,7 +166,7 @@ DateTimeSpan::DateTimeSpan(i32 d, i32 h, i32 m, i32 s) {
     time += (f64)s / (24 * 3600);
 }
 
-void DateTimeSpan::getTime(i32 *To) const {
+void DateTimeSpan::getTime(i32* To) const {
     To[0] = trunc(time);
 
     f64 part = time - To[0];
@@ -182,12 +179,29 @@ void DateTimeSpan::getTime(i32 *To) const {
 
 
 int main() {
-    DateTime dt1(23, 1, 1970, 23, 59, 59);
-    DateTime dt2(23, 1, 1971, 23, 59, 59);
+    DateTime dl1 (1, 2, 2006, 0, 0, 0);
+    DateTime dl2 (28, 2, 2001, 10, 15, 54);
+    DateTimeSpan dt1(1, -10, 3, 52);
+    DateTimeSpan dt2(3, 4, 2, 3);
+    DateTimeSpan dt3 = dt2 + dt1;
+    DateTimeSpan dt4 = dt2 - dt1;
+    DateTimeSpan dt5 = dl2 - dl1;
+    DateTime dl3 (8, 3, 2024, 0, 0, 0);
+    DateTime dl4 (426.0);
+    DateTime dl5 (2, 3, 2001, 10, 15, 54);
 
-    DateTimeSpan ds(1, 1, 3, 0);
-    DateTimeSpan dl = dt2 - dt1;
-    DateTimeSpan dl1 = dl-ds;
+    std::cout << (double)dl3.getReal() << std::endl;
+    std::cout << (double)dl2.getReal() << std::endl;
+    std::cout << (double)dl4.getReal() << std::endl;
+    std::cout << (double)dl5.getReal() << std::endl;
 
-    dl1.print_out();
+    dt1.print_out();
+    dt2.print_out();
+    dt3.print_out();
+    dt4.print_out();
+    dt5.print_out();
+    dl2.print_out();
+    dl3.print_out();
+    dl4.print_out();
+    dl5.print_out();
 }
