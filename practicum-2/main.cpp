@@ -20,6 +20,9 @@ public:
     DynMatrix(u32 n, u32 m) : id(++counter), size_1(n), size_2(m) {
         mem = new T[n*m];
     };
+    DynMatrix(const DynMatrix<T>& rhs) : DynMatrix(rhs.size_1, rhs.size_2) {
+        std::memcpy(mem, rhs.mem, sizeof(T)*size_1*size_2);
+    };
     ~DynMatrix() {
         delete mem;
     };
@@ -128,14 +131,22 @@ int main() {
     v2.fill_random(2);
     m.fill_random(4);
 
+    DynMatrix<f32> v4(m);
     DynMatrix<f32> v3 = v1.tr() * v2;
 
     std::cout << v1;
     std::cout << v2;
     std::cout << v3;
+    std::cout << v4;
     std::cout << m;
     std::cout << m[1];
-    std::cout << m[1][1];
+    std::cout << m[1][1] << '\n';
+
+    DynMatrix<f32> A1(4, 4);
+    A1.fill_random(4);
+    std::cout << A1 << std::endl;
+
+    std::cout << A1 * m << std::endl;
 
     return 0;
 }
