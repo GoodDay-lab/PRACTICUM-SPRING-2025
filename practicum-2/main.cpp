@@ -11,10 +11,13 @@ class DynVector;
 template <typename T>
 class DynMatrix {
 protected:
+    inline static u32 counter = 0;
+
+    const u32 id;
     T *mem;
     u32 size_1, size_2;
 public:
-    DynMatrix(u32 n, u32 m) : size_1(n), size_2(m) {
+    DynMatrix(u32 n, u32 m) : id(++counter), size_1(n), size_2(m) {
         mem = new T[n*m];
     };
     ~DynMatrix() {
