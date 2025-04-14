@@ -203,7 +203,7 @@ Lex Scanner:: get_lex (){
                 buf.push_back(c);
                 if ( (j = look ( buf, TD)) )
                     buf.clear();
-                    return Lex((type_of_lex) (j+(int) LEX_WRITE),j);
+                return Lex((type_of_lex) (j+(int) LEX_WRITE),j);
             }
             else
             if (feof(fp)){
@@ -220,7 +220,7 @@ Lex Scanner:: get_lex (){
             else{ 
                 ungetc(c, fp);
                 CS = H;
-                if ( j = look (buf, TW) ) {//проверка на служебное слово
+                if ( (j = look (buf, TW)) ) {//проверка на служебное слово
                     buf.clear();
                     return Lex ((type_of_lex) j, j);
                 }
