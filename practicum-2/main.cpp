@@ -24,7 +24,7 @@ public:
         std::memcpy(mem, rhs.mem, sizeof(T)*size_1*size_2);
     };
     ~DynMatrix() {
-        delete mem;
+        delete[] mem;
     };
 
     virtual u32 size() const {
@@ -52,6 +52,18 @@ public:
                     S += (this->mem)[i * this->size_2 + k] * (rhs.mem)[k * rhs.size_2 + j];
                 }
                 ret.mem[i * ret.size_2 + j] = S;
+            }
+        }
+
+        return ret;
+    };
+
+    virtual DynMatrix operator* (T d) {
+        DynMatrix<T> ret(size_1, size_2);
+
+        for (u32 i = 0; i != ret.size_1; i++) {
+            for (u32 j = 0; j != ret.size_2; j++) {
+                ret.mem[i * ret.size_2 + j] = mem[i * size_2 + j] * d;
             }
         }
 
@@ -123,7 +135,7 @@ std::ostream& operator<< (std::ostream& ct, const DynMatrix<T>& data) {
 
 
 int main() {
-    DynVector<f32> v1(3);
+    DynMatrix<f32> v1(3, 1);
     DynVector<f32> v2(3);
     DynMatrix<f32> m(4, 3);
 
@@ -147,6 +159,7 @@ int main() {
     std::cout << A1 << std::endl;
 
     std::cout << A1 * m << std::endl;
+    std::cout << A1 * m * 4.0 << std::endl;
 
     return 0;
 }

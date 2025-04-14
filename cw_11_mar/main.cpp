@@ -41,7 +41,5 @@ int Logger::counter = 0;
 
 int main()
 {
-    int n;
-    std::cin >> n;
-    std::vector<Logger> v(n);
+    throw Logger();
 }
