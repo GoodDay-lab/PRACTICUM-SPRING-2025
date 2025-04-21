@@ -1,6 +1,6 @@
 CXX_COMP = clang++
 CXX_FLAGS = -std=c++20 -Wall -O1
-TARGET = main
+TARGET = langc
 SOURCE = main.cpp
 
 build:

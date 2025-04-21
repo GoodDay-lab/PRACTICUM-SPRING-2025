@@ -205,7 +205,7 @@ public:
 
         current++;
 
-        addToken(STRING, source.substr(start + 1, current - start - 1));
+        addToken(STRING, source.substr(start + 1, current - start - 2));
     };
 
     char peek() {
