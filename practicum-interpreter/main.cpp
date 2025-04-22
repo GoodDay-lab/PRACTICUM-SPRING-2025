@@ -4,6 +4,8 @@ using namespace std;
 
 #include "logging.cpp"
 #include "scanner.cpp"
+#include "expr.cpp"
+#include "parser.cpp"
 
 int runPrompt(int, const vector<string>&);
 int runFile(int, const vector<string>&);
@@ -58,6 +60,12 @@ void run(const string &source) {
 
     Scanner scanner(source);
     vector<Token> tokens = scanner.scanTokens();
+
+    Parser parser(tokens);
+    Expr expression = parser.parse();
+
+    if (hadError)
+        return;
 
     for (Token tok : tokens)
         cout << tok << '\n';

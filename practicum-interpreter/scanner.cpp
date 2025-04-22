@@ -24,6 +24,8 @@ enum TokenType
 
   READ, WRITE,
 
+  INTTYPE, STRINGTYPE,
+
   _EOF
 };
 
@@ -53,18 +55,21 @@ void initKeywords() {
     keywords["goto"] = GOTO;
     keywords["until"] = UNTIL;
     keywords["do"] = DO;
+    keywords["int"] = INTTYPE;
+    keywords["string"] = STRINGTYPE;
 }
 
-typedef variant<int, double, nullptr_t, string> LiteralType;
+typedef variant<int, double, nullptr_t, string, bool> LiteralType;
 
-class Token 
+class Token
 {
-    const TokenType _type;
+protected:
     const string _lexeme;
     const int _line;
-    const LiteralType _literal;
-
 public:
+    const LiteralType _literal;
+    const TokenType _type;
+
     Token(TokenType _t, string _l, LiteralType _lit, int _n) : 
       _type(_t), _lexeme(_l), _line(_n), _literal(_lit) {};
     ~Token() {};
@@ -111,20 +116,8 @@ public:
           case ',': addToken(COMMA); break;
           case '.': addToken(DOT); break;
           case '%': addToken(MOD); break;
-          case '-':
-            if (isdigit(peek())) {
-              current++;
-              scanNumber(1);
-            } else
-              addToken(MINUS);
-            break;
-          case '+': 
-            if (isdigit(peek())) {
-              current++;
-              scanNumber(0);
-            } else
-              addToken(PLUS);
-            break;
+          case '-': addToken(MINUS); break;
+          case '+': addToken(PLUS); break;
           case ';': addToken(SEMICOLON); break;
           case '*': addToken(STAR); break; 
           case '!':
@@ -177,7 +170,7 @@ public:
             addToken(keywords[value]);
     };
 
-    void scanNumber(int sign = 0) {
+    void scanNumber() {
         while (isdigit(peek())) current++;
 
         if (peek() == '.' && isdigit(peekNext())) {
@@ -186,10 +179,7 @@ public:
             while (isdigit(peek())) current++;
         }
 
-        if (sign)
-          addToken(NUMBER, -stod(source.substr(start, current - start)));
-        else
-          addToken(NUMBER, stod(source.substr(start, current - start)));
+        addToken(NUMBER, stod(source.substr(start, current - start)));
     };
 
     void scanString() {
