@@ -31,7 +31,7 @@ int main(int argc, char *argv[])    // langc [<script> | <filename>]
 int runPrompt(int argc, const vector<string> &argv) {
     string inputLine;
 
-    while (cin >> inputLine) {
+    while (getline(cin, inputLine)) {
         run(inputLine);
         hadError = 0;
     }
@@ -62,7 +62,10 @@ void run(const string &source) {
     vector<Token> tokens = scanner.scanTokens();
 
     Parser parser(tokens);
-    Expr expression = parser.parse();
+    list<Stmt*> statements = parser.parse2();
+
+    ASTView viewer;
+    cout << viewer.print(statements) << '\n';
 
     if (hadError)
         return;

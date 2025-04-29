@@ -1,7 +1,4 @@
-"aasdasd
-asdasd"
-
-
-"asd""asd"
-"a""sdasd"
+print "hell";
+print 2 + 3;
+print "this time"
 

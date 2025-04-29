@@ -63,15 +63,14 @@ typedef variant<int, double, nullptr_t, string, bool> LiteralType;
 
 class Token
 {
-protected:
+public:
     const string _lexeme;
     const int _line;
-public:
     const LiteralType _literal;
     const TokenType _type;
 
     Token(TokenType _t, string _l, LiteralType _lit, int _n) : 
-      _type(_t), _lexeme(_l), _line(_n), _literal(_lit) {};
+      _lexeme(_l), _line(_n), _literal(_lit), _type(_t) {};
     ~Token() {};
 
     string toString() const {
