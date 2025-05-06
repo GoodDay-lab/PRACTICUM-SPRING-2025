@@ -1,4 +1,0 @@
-print "hell";
-print 2 + 3;
-print "this time"
-
