@@ -74,6 +74,7 @@ struct ForStmt;
 struct FuncStmt;
 struct RetStmt;
 struct ClassStmt;
+struct BreakStmt;
 
 // Unique pointer sugar for Stmts
 using ExprStmtPtr = std::unique_ptr<ExprStmt>;
@@ -86,13 +87,14 @@ using ForStmtPtr = std::unique_ptr<ForStmt>;
 using FuncStmtPtr = std::unique_ptr<FuncStmt>;
 using RetStmtPtr = std::unique_ptr<RetStmt>;
 using ClassStmtPtr = std::unique_ptr<ClassStmt>;
+using BreakStmtPtr = std::unique_ptr<BreakStmt>;
 
 // We use this variant to pass around pointers to each of these Stmt types,
 // without having to resort to virtual functions and dynamic dispatch
 using StmtPtrVariant
     = std::variant<ExprStmtPtr, PrintStmtPtr, BlockStmtPtr, VarStmtPtr,
                    IfStmtPtr, WhileStmtPtr, ForStmtPtr, FuncStmtPtr, RetStmtPtr,
-                   ClassStmtPtr>;
+                   ClassStmtPtr, BreakStmtPtr>;
 
 // Helper functions to create ExprPtrVariants for each Expr type
 auto createBinaryEPV(ExprPtrVariant left, Token op, ExprPtrVariant right)
@@ -136,6 +138,7 @@ auto createRetSPV(Token ret, std::optional<ExprPtrVariant> value)
     -> StmtPtrVariant;
 auto createClassSPV(Token className, std::optional<ExprPtrVariant> superClass,
                     std::vector<StmtPtrVariant> methods) -> StmtPtrVariant;
+auto createBreakSPV() -> StmtPtrVariant;
 
 // Expression AST Types:
 
@@ -297,6 +300,10 @@ struct ClassStmt : public Uncopyable {
   std::vector<StmtPtrVariant> methods;
   ClassStmt(Token className, std::optional<ExprPtrVariant> superClass,
             std::vector<StmtPtrVariant> methods);
+};
+
+struct BreakStmt : public Uncopyable {
+  explicit BreakStmt();
 };
 
 }  // namespace cpplox::AST

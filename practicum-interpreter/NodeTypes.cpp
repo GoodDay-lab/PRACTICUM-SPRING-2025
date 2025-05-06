@@ -177,6 +177,8 @@ ClassStmt::ClassStmt(Token className, std::optional<ExprPtrVariant> superClass,
       superClass(std::move(superClass)),
       methods(std::move(methods)) {}
 
+BreakStmt::BreakStmt() {}
+
 // ============================================================= //
 // Helper functions to create StmtPtrVariants for each Stmt type //
 // ============================================================= //
@@ -229,6 +231,10 @@ auto createClassSPV(Token className, std::optional<ExprPtrVariant> superClass,
                     std::vector<StmtPtrVariant> methods) -> StmtPtrVariant {
   return std::make_unique<ClassStmt>(std::move(className),
                                      std::move(superClass), std::move(methods));
+}
+
+auto createBreakSPV() -> StmtPtrVariant {
+  return std::make_unique<BreakStmt>();
 }
 
 }  // namespace cpplox::AST

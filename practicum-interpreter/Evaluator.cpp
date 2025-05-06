@@ -514,8 +514,12 @@ auto Evaluator::evaluateFuncStmt(const FuncStmtPtr& stmt)
 auto Evaluator::evaluateRetStmt(const RetStmtPtr& stmt)
     -> std::optional<LoxObject> {
   return stmt->value.has_value()
-             ? std::make_optional(evaluateExpr(stmt->value.value()))
+             ? std::make_optional<LoxObject>(evaluateExpr(stmt->value.value()))
              : std::nullopt;
+}
+
+auto Evaluator::evaluateBreakStmt(const BreakStmtPtr& stmt) -> std::optional<LoxObject> {
+  return std::make_optional<LoxObject>(std::make_shared<LoxBreak>());
 }
 
 auto Evaluator::evaluateClassStmt(const ClassStmtPtr& stmt)
@@ -593,9 +597,11 @@ auto Evaluator::evaluateStmt(const AST::StmtPtrVariant& stmt)
       return evaluateRetStmt(std::get<8>(stmt));
     case 9:  // ClassStmtPtr
       return evaluateClassStmt(std::get<9>(stmt));
+    case 10: // BreakStmtPtr
+      return evaluateBreakStmt(std::get<10>(stmt));
     default:
       static_assert(
-          std::variant_size_v<StmtPtrVariant> == 10,
+          std::variant_size_v<StmtPtrVariant> == 11,
           "Looks like you forgot to update the cases in "
           "PrettyPrinter::toString(const StmtPtrVariant& statement)!");
       return std::nullopt;

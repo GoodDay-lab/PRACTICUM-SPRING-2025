@@ -75,6 +75,9 @@ auto LoxClass::findMethod(const std::string& methodName)
   return std::nullopt;
 }
 
+// LoxBreak
+LoxBreak::LoxBreak() {};
+
 // LoxInstance
 LoxInstance::LoxInstance(LoxClassShrdPtr klass) : klass(std::move(klass)) {}
 
@@ -124,7 +127,7 @@ auto areEqual(const LoxObject& left, const LoxObject& right) -> bool {
         return std::get<LoxInstanceShrdPtr>(left).get()
                == std::get<LoxInstanceShrdPtr>(right).get();
       default:
-        static_assert(std::variant_size_v<LoxObject> == 8,
+        static_assert(std::variant_size_v<LoxObject> == 9,
                       "Looks like you forgot to update the cases in "
                       "ExprEvaluator::areEqual(const LoxObject&, const "
                       "LoxObject&)!");
@@ -158,8 +161,10 @@ auto getObjectString(const LoxObject& object) -> std::string {
       return std::get<LoxClassShrdPtr>(object)->getClassName();
     case 7:  // LoxInstanceShrdPtr
       return std::get<LoxInstanceShrdPtr>(object)->toString();
+    case 8:  // LoxBreakShrdPtr
+      return "break";
     default:
-      static_assert(std::variant_size_v<LoxObject> == 8,
+      static_assert(std::variant_size_v<LoxObject> == 9,
                     "Looks like you forgot to update the cases in "
                     "getLiteralString()!");
       return "";

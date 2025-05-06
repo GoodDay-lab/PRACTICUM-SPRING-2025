@@ -34,6 +34,7 @@ using AST::UnaryExprPtr;
 using AST::VariableExprPtr;
 
 using AST::BlockStmtPtr;
+using AST::BreakStmtPtr;
 using AST::ClassStmtPtr;
 using AST::ExprStmtPtr;
 using AST::ForStmtPtr;
@@ -90,6 +91,7 @@ class Evaluator {
   auto evaluateFuncStmt(const FuncStmtPtr& stmt) -> std::optional<LoxObject>;
   auto evaluateRetStmt(const RetStmtPtr& stmt) -> std::optional<LoxObject>;
   auto evaluateClassStmt(const ClassStmtPtr& stmt) -> std::optional<LoxObject>;
+  auto evaluateBreakStmt(const BreakStmtPtr& stmt) -> std::optional<LoxObject>;
 
   // throws RuntimeError if right isn't a double
   auto getDouble(const Token& token, const LoxObject& right) -> double;

@@ -9,9 +9,10 @@ if (a == b) {
 
 int i = 0;
 while (1) {
-    if (i == 5)
+    if (i == 5) {
         break;
-    
+    }
+
     print i;
     i++;
 }

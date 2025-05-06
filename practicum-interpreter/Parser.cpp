@@ -375,6 +375,7 @@ auto RDParser::statement() -> StmtPtrVariant {
   if (match(TokenType::WHILE)) return whileStmt();
   if (match(TokenType::FOR)) return forStmt();
   if (match(TokenType::RETURN)) return returnStmt();
+  if (match(TokenType::BREAK)) return breakStmt();
   return exprStmt();
 }
 
@@ -481,6 +482,13 @@ auto RDParser::returnStmt() -> StmtPtrVariant {
   }
   consumeSemicolonOrError();
   return AST::createRetSPV(std::move(ret), std::move(value));
+}
+
+// breakStmt
+auto RDParser::breakStmt() -> StmtPtrVariant {
+  advance();
+  consumeSemicolonOrError();
+  return AST::createBreakSPV();
 }
 
 //=============//

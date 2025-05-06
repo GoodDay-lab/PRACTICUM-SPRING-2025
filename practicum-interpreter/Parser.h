@@ -96,6 +96,7 @@ class RDParser {
   auto whileStmt() -> StmtPtrVariant;
   auto forStmt() -> StmtPtrVariant;
   auto returnStmt() -> StmtPtrVariant;
+  auto breakStmt() -> StmtPtrVariant;
 
   // Expression Parsing
   auto expression() -> ExprPtrVariant;

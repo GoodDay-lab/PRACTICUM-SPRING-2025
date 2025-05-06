@@ -253,6 +253,10 @@ auto printRetStmt(const RetStmtPtr& stmt) -> std::string {
   return "( return" + value + ");";
 }
 
+auto printBreakStmt(const BreakStmtPtr& stmt) -> std::string {
+  return "( break );";
+}
+
 auto printClassStmt(const ClassStmtPtr& stmt) -> std::vector<std::string> {
   std::vector<std::string> strVec;
   strVec.emplace_back("(CLASS " + stmt->className.getLexeme() + " )");
@@ -293,9 +297,11 @@ auto PrettyPrinter::toString(const StmtPtrVariant& statement)
       return std::vector(1, printRetStmt(std::get<8>(statement)));
     case 9:  // ClassStmtPtr
       return printClassStmt(std::get<9>(statement));
+    case 10:
+      return std::vector(1, printBreakStmt(std::get<10>(statement)));
     default:
       static_assert(
-          std::variant_size_v<StmtPtrVariant> == 10,
+          std::variant_size_v<StmtPtrVariant> == 11,
           "Looks like you forgot to update the cases in "
           "PrettyPrinter::toString(const StmtPtrVariant& statement)!");
       return {};

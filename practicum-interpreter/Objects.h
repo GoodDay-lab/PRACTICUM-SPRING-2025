@@ -25,9 +25,12 @@ using LoxClassShrdPtr = std::shared_ptr<LoxClass>;
 class LoxInstance;
 using LoxInstanceShrdPtr = std::shared_ptr<LoxInstance>;
 
+class LoxBreak;
+using LoxBreakShrdPtr = std::shared_ptr<LoxBreak>;
+
 using LoxObject
     = std::variant<std::string, double, bool, std::nullptr_t, FuncShrdPtr,
-                   BuiltinFuncShrdPtr, LoxClassShrdPtr, LoxInstanceShrdPtr>;
+                   BuiltinFuncShrdPtr, LoxClassShrdPtr, LoxInstanceShrdPtr, LoxBreakShrdPtr>;
 
 auto areEqual(const LoxObject& left, const LoxObject& right) -> bool;
 
@@ -87,6 +90,11 @@ class LoxClass : public Types::Uncopyable {
   auto getClassName() -> std::string;
   auto getSuperClass() -> std::optional<LoxClassShrdPtr>;
   auto findMethod(const std::string& methodName) -> std::optional<LoxObject>;
+};
+
+class LoxBreak : public Types::Uncopyable {
+ public:
+   explicit LoxBreak();
 };
 
 class LoxInstance : public Types::Uncopyable {
