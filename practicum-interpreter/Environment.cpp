@@ -29,6 +29,7 @@ auto Environment::assign(size_t hashedVarName, LoxObject object) -> bool {
   auto iter = objects.find(hashedVarName);
   if (iter != objects.end()) {
     objects.insert_or_assign(hashedVarName, object);
+    objects_T.insert_or_assign(hashedVarName, object.index());
     return true;
   }
   if (EXPECT_TRUE(parentEnviron != nullptr))
@@ -37,8 +38,9 @@ auto Environment::assign(size_t hashedVarName, LoxObject object) -> bool {
   throw UndefinedVarAccess();
 }
 
-void Environment::define(size_t hashedVarName, LoxObject object) {
+void Environment::define(size_t hashedVarName, LoxObject object, size_t t) {
   objects.insert_or_assign(hashedVarName, object);
+  objects_T.insert_or_assign(hashedVarName, t);
 }
 
 auto Environment::get(size_t hashedVarName) -> LoxObject {
@@ -50,6 +52,17 @@ auto Environment::get(size_t hashedVarName) -> LoxObject {
   }
   if (EXPECT_TRUE(parentEnviron != nullptr))
     return parentEnviron->get(hashedVarName);
+
+  throw UndefinedVarAccess();  // throws only in the Global Environ
+}
+
+auto Environment::get_T(size_t hashedVarName) -> size_t {
+  auto iter = objects.find(hashedVarName);
+  if (EXPECT_TRUE(iter != objects.end())) {
+    return objects_T.find(hashedVarName)->second;
+  }
+  if (EXPECT_TRUE(parentEnviron != nullptr))
+    return parentEnviron->get_T(hashedVarName);
 
   throw UndefinedVarAccess();  // throws only in the Global Environ
 }
@@ -103,13 +116,13 @@ void EnvironmentManager::discardEnvironsTill(
   }
 }
 
-void EnvironmentManager::define(const std::string& tokenStr, LoxObject object) {
-  currEnviron->define(hasher(tokenStr), std::move(object));
+void EnvironmentManager::define(const std::string& tokenStr, LoxObject object, size_t t) {
+  currEnviron->define(hasher(tokenStr), std::move(object), t);
 }
 
 void EnvironmentManager::define(const Types::Token& varToken,
-                                LoxObject object) {
-  currEnviron->define(hasher(varToken.getLexeme()), std::move(object));
+                                LoxObject object, size_t t) {
+  currEnviron->define(hasher(varToken.getLexeme()), std::move(object), t);
 }
 
 void EnvironmentManager::assign(const Types::Token& varToken,
@@ -125,6 +138,18 @@ void EnvironmentManager::assign(const Types::Token& varToken,
 auto EnvironmentManager::get(const Types::Token& varToken) -> LoxObject {
   try {
     return currEnviron->get(hasher(varToken.getLexeme()));
+  } catch (const UndefinedVarAccess& e) {
+    throw ErrorsAndDebug::reportRuntimeError(
+        eReporter, varToken, "Attempted to access an undefined variable.");
+  } catch (const UninitializedVarAccess& e) {
+    throw ErrorsAndDebug::reportRuntimeError(
+        eReporter, varToken, "Attempted to access an uninitialized variable.");
+  }
+}
+
+auto EnvironmentManager::get_T(const Types::Token& varToken) -> size_t {
+  try {
+    return currEnviron->get_T(hasher(varToken.getLexeme()));
   } catch (const UndefinedVarAccess& e) {
     throw ErrorsAndDebug::reportRuntimeError(
         eReporter, varToken, "Attempted to access an undefined variable.");

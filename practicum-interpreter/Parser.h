@@ -16,47 +16,26 @@
 
 // clang-format off
 // Grammar production rules:
-// program     → declaration* LOX_EOF;
-// declaration → varDecl | funcDecl | classDecl | statement;
-// varDecl     → "var" IDENTIFIER ("=" expression)? ";" ;
-// classDecl   → "class" IDENTIFIER ("<" IDENTIFIER)? "{" funcDecl* "}" ;
-// funcDecl    → IDENTIFIER funcBody;
-// funcBody     → "(" parameters? ")" "{" declaration "}";
-// statement   → exprStmt | printStmt | blockStmt | ifStmt | whileStmt |
-// statement   → forStmt | returnStmt;
-// exprStmt    → expression ';' ;
-// printStmt   → "print" expression ';' ;
-// blockStmt   → "{" declaration "}"
-// ifStmt      → "if" "(" expression ")" statement ("else" statement)? ;
-// whileStmt   → "while" "(" expression ")" statement;
-// forStmt     → "for" "(" varDecl | exprStmnt | ";"
-//                          expression? ";"
-//                          expression? ")" statement;
-// returnStmt  → "return" (expression)? ";";
-// expression  → comma;
-// comma       → assignment ("," assignment)*;
-// arguments   → assignment  ( "," assignment )* ;
-// assignment  → (call ".")? IDENTIFIER "=" assignment | condititional;
-// conditional → logical_or ("?" expression ":" conditional)?;
-// logical_or  → logical_and ("or" logical_and)*;
-// logical_and → equality ("and" equality)*;
-// equality    → comparison(("!=" | "==") comparison) *;
-// comparison  → addition((">" | ">=" | "<" | "<=") addition) *;
-// addition    → multiplication(("-" | "+") multiplication) *;
-// multipli... → unary(("/" | "*") unary) *;
-// unary       → ("!" | "-" | "--" | "++") unary | postfix;
-// postfix     → call ("++" | "--")*;
-// call        → primary ( "(" arguments? ")" | "." IDENTIFIER )*;
-// primary     → NUMBER | STRING | "false" | "true" | "nil";
-// primary     → "(" expression ")";
-// primary     → IDENTIFIER;
-// primary     → "fun" funcBody;
-// primary     → "super" "." IDENTIFIER;
-// Error Productions:
-// primary     → ("!=" | "==") equality;
-// primary     → (">" | ">=" | "<" | "<=") comparison;
-// primary     → ("+")addition;
-// primary     → ("/" | "*") multiplication;
+// program      -> program { <descriptions> <operators> }
+// descriptions -> [ <description>; ]*
+// description  -> [ <type> <variable> [, <variable>]*;
+// type         -> int | string | real
+// variable     -> <identifier> | <identifier> = <const>
+// const        -> <integer> | <string> | <real>
+// integer      -> [<sign>] [<digit>]+
+// sign         -> + | -
+// string       -> "{<literal>}"
+// real         -> [<sign>] [<digit>]+.[<digit>]+
+// operators    -> { <operator> }
+// operator     -> if (<expression>) <operator> else <operator> |
+//                  while (<expression>) <operator> |
+//                  read (<identifier>); |
+//                  write (<expression>) [, <expression>]*); |
+//                  for ([<expression>]; [<expression>]; [<expression>]) <operator> |
+//                  <complexexpr> | <exproperator> | break; 
+// complexexpr  -> { <operators> }
+// exproperator -> <expression>;
+//
 // clang-format on
 
 namespace cpplox::Parser {
@@ -81,21 +60,17 @@ class RDParser {
   // Statment parsing
   void program();
   auto declaration() -> std::optional<StmtPtrVariant>;
-  auto varDecl() -> StmtPtrVariant;
-  auto intDecl() -> StmtPtrVariant;
-  auto strDecl() -> StmtPtrVariant;
-  auto classDecl() -> StmtPtrVariant;
-  auto funcDecl(const std::string& kind) -> StmtPtrVariant;
-  auto funcBody(const std::string& kind) -> ExprPtrVariant;
-  auto parameters() -> std::vector<Types::Token>;
+  auto intDecl() -> void;
+  auto strDecl() -> void;
+  auto realDecl() -> void;
   auto statement() -> StmtPtrVariant;
   auto exprStmt() -> StmtPtrVariant;
-  auto printStmt() -> StmtPtrVariant;
+  auto readStmt() -> StmtPtrVariant;
+  auto writeStmt() -> StmtPtrVariant;
   auto blockStmt() -> StmtPtrVariant;
   auto ifStmt() -> StmtPtrVariant;
   auto whileStmt() -> StmtPtrVariant;
   auto forStmt() -> StmtPtrVariant;
-  auto returnStmt() -> StmtPtrVariant;
   auto breakStmt() -> StmtPtrVariant;
 
   // Expression Parsing
@@ -110,9 +85,6 @@ class RDParser {
   auto addition() -> ExprPtrVariant;
   auto multiplication() -> ExprPtrVariant;
   auto unary() -> ExprPtrVariant;
-  auto postfix() -> ExprPtrVariant;
-  auto call() -> ExprPtrVariant;
-  auto arguments() -> std::vector<ExprPtrVariant>;
   auto primary() -> ExprPtrVariant;
 
   // Helper functions to implement the parser
@@ -125,7 +97,6 @@ class RDParser {
   auto consumeOneLiteral() -> ExprPtrVariant;
   auto consumeOneLiteral(const std::string& str) -> ExprPtrVariant;
   auto consumeGroupingExpr() -> ExprPtrVariant;
-  auto consumePostfixExpr(ExprPtrVariant expr) -> ExprPtrVariant;
   void consumeSemicolonOrError();
   auto consumeSuper() -> ExprPtrVariant;
   auto consumeUnaryExpr() -> ExprPtrVariant;

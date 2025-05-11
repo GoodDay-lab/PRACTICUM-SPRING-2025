@@ -1,5 +1,5 @@
 CXX_COMP = clang++
-CXX_FLAGS = -std=c++20 -Wall -O1
+CXX_FLAGS = -std=c++20 -Wall -O1 #-DPARSER_DEBUG -D_CPPLOX_DEBUG_
 TARGET = langc
 SOURCE = DebugPrint.cpp Environment.cpp ErrorReporter.cpp Evaluator.cpp \
 			InterpreterDriver.cpp Literal.cpp main.cpp NodeTypes.cpp \

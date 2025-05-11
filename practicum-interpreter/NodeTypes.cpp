@@ -30,9 +30,6 @@ ConditionalExpr::ConditionalExpr(ExprPtrVariant condition,
       thenBranch(std::move(thenBranch)),
       elseBranch(std::move(elseBranch)) {}
 
-PostfixExpr::PostfixExpr(ExprPtrVariant left, Token op)
-    : left(std::move(left)), op(std::move(op)) {}
-
 VariableExpr::VariableExpr(Token varName) : varName(std::move(varName)) {}
 
 AssignmentExpr::AssignmentExpr(Token varName, ExprPtrVariant right)
@@ -41,26 +38,6 @@ AssignmentExpr::AssignmentExpr(Token varName, ExprPtrVariant right)
 LogicalExpr::LogicalExpr(ExprPtrVariant left, Token op, ExprPtrVariant right)
     : left(std::move(left)), op(std::move(op)), right(std::move(right)) {}
 
-CallExpr::CallExpr(ExprPtrVariant callee, Token paren,
-                   std::vector<ExprPtrVariant> arguments)
-    : callee(std::move(callee)),
-      paren(std::move(paren)),
-      arguments(std::move(arguments)) {}
-
-FuncExpr::FuncExpr(std::vector<Token> parameters,
-                   std::vector<StmtPtrVariant> body)
-    : parameters(std::move(parameters)), body(std::move(body)) {}
-
-GetExpr::GetExpr(ExprPtrVariant expr, Token name)
-    : expr(std::move(expr)), name(std::move(name)) {}
-
-SetExpr::SetExpr(ExprPtrVariant expr, Token name, ExprPtrVariant value)
-    : expr(std::move(expr)), name(std::move(name)), value(std::move(value)) {}
-
-ThisExpr::ThisExpr(Token keyword) : keyword(std::move(keyword)) {}
-
-SuperExpr::SuperExpr(Token keyword, Token method)
-    : keyword(std::move(keyword)), method(std::move(method)) {}
 
 // ==============================//
 // EPV creation helper functions //
@@ -88,10 +65,6 @@ auto createConditionalEPV(ExprPtrVariant condition, ExprPtrVariant then,
       std::move(condition), std::move(then), std::move(elseBranch));
 }
 
-auto createPostfixEPV(ExprPtrVariant left, Token op) -> ExprPtrVariant {
-  return std::make_unique<PostfixExpr>(std::move(left), op);
-}
-
 auto createVariableEPV(Token varName) -> ExprPtrVariant {
   return std::make_unique<VariableExpr>(varName);
 }
@@ -105,47 +78,28 @@ auto createLogicalEPV(ExprPtrVariant left, Token op, ExprPtrVariant right)
   return std::make_unique<LogicalExpr>(std::move(left), op, std::move(right));
 }
 
-auto createCallEPV(ExprPtrVariant callee, Token paren,
-                   std::vector<ExprPtrVariant> arguments) -> ExprPtrVariant {
-  return std::make_unique<CallExpr>(std::move(callee), std::move(paren),
-                                    std::move(arguments));
-}
-
-auto createFuncEPV(std::vector<Token> params,
-                   std::vector<StmtPtrVariant> fnBody) -> ExprPtrVariant {
-  return std::make_unique<FuncExpr>(std::move(params), std::move(fnBody));
-}
-
-auto createGetEPV(ExprPtrVariant expr, Token name) -> ExprPtrVariant {
-  return std::make_unique<GetExpr>(std::move(expr), std::move(name));
-}
-
-auto createSetEPV(ExprPtrVariant expr, Token name, ExprPtrVariant value)
-    -> ExprPtrVariant {
-  return std::make_unique<SetExpr>(std::move(expr), std::move(name),
-                                   std::move(value));
-}
-
-auto createThisEPV(Token keyword) -> ExprPtrVariant {
-  return std::make_unique<ThisExpr>(std::move(keyword));
-}
-
-auto createSuperEPV(Token keyword, Token method) -> ExprPtrVariant {
-  return std::make_unique<SuperExpr>(std::move(keyword), std::move(method));
-}
-
 // =================== //
 // Statment AST types; //
 // =================== //
 ExprStmt::ExprStmt(ExprPtrVariant expr) : expression(std::move(expr)) {}
 
-PrintStmt::PrintStmt(ExprPtrVariant expr) : expression(std::move(expr)) {}
+// WriteStmt::WriteStmt(ExprPtrVariant expr) : expression(std::move(expr)) {}
+
+WriteStmt::WriteStmt(std::vector<ExprPtrVariant> exprs) : expressions(std::move(exprs)) {}
+
+ReadStmt::ReadStmt(Token name) : varName(name) {}
+
+IntStmt::IntStmt(Token varName, std::optional<ExprPtrVariant> initializer)
+    : varName(std::move(varName)), initializer(std::move(initializer)) {}
+
+RealStmt::RealStmt(Token varName, std::optional<ExprPtrVariant> initializer)
+    : varName(std::move(varName)), initializer(std::move(initializer)) {}
+
+StrStmt::StrStmt(Token varName, std::optional<ExprPtrVariant> initializer)
+    : varName(std::move(varName)), initializer(std::move(initializer)) {}
 
 BlockStmt::BlockStmt(std::vector<StmtPtrVariant> statements)
     : statements(std::move(statements)) {}
-
-VarStmt::VarStmt(Token varName, std::optional<ExprPtrVariant> initializer)
-    : varName(std::move(varName)), initializer(std::move(initializer)) {}
 
 IfStmt::IfStmt(ExprPtrVariant condition, StmtPtrVariant thenBranch,
                std::optional<StmtPtrVariant> elseBranch)
@@ -165,19 +119,7 @@ ForStmt::ForStmt(std::optional<StmtPtrVariant> initializer,
       increment(std::move(increment)),
       loopBody(std::move(loopBody)) {}
 
-FuncStmt::FuncStmt(Token funcName, FuncExprPtr funcExpr)
-    : funcName(std::move(funcName)), funcExpr(std::move(funcExpr)) {}
-
-RetStmt::RetStmt(Token ret, std::optional<ExprPtrVariant> value)
-    : ret(std::move(ret)), value(std::move(value)) {}
-
-ClassStmt::ClassStmt(Token className, std::optional<ExprPtrVariant> superClass,
-                     std::vector<StmtPtrVariant> methods)
-    : className(std::move(className)),
-      superClass(std::move(superClass)),
-      methods(std::move(methods)) {}
-
-BreakStmt::BreakStmt() {}
+BreakStmt::BreakStmt(Token n) : name(n) {}
 
 // ============================================================= //
 // Helper functions to create StmtPtrVariants for each Stmt type //
@@ -186,17 +128,37 @@ auto createExprSPV(ExprPtrVariant expr) -> StmtPtrVariant {
   return std::make_unique<ExprStmt>(std::move(expr));
 }
 
-auto createPrintSPV(ExprPtrVariant expr) -> StmtPtrVariant {
-  return std::make_unique<PrintStmt>(std::move(expr));
+/*
+auto createWriteSPV(ExprPtrVariant expr) -> StmtPtrVariant {
+  return std::make_unique<WriteStmt>(std::move(expr));
+}
+*/
+
+auto createWriteSPV(std::vector<ExprPtrVariant> exprs) -> StmtPtrVariant {
+  return std::make_unique<WriteStmt>(std::move(exprs));
+}
+
+auto createReadSPV(Token varName) -> StmtPtrVariant {
+  return std::make_unique<ReadStmt>(varName);
+}
+
+auto createIntSPV(Token varName, std::optional<ExprPtrVariant> initializer)
+    -> StmtPtrVariant {
+  return std::make_unique<IntStmt>(varName, std::move(initializer));
+}
+
+auto createRealSPV(Token varName, std::optional<ExprPtrVariant> initializer)
+    -> StmtPtrVariant {
+  return std::make_unique<RealStmt>(varName, std::move(initializer));
+}
+
+auto createStrSPV(Token varName, std::optional<ExprPtrVariant> initializer)
+    -> StmtPtrVariant {
+  return std::make_unique<StrStmt>(varName, std::move(initializer));
 }
 
 auto createBlockSPV(std::vector<StmtPtrVariant> statements) -> StmtPtrVariant {
   return std::make_unique<BlockStmt>(std::move(statements));
-}
-
-auto createVarSPV(Token varName, std::optional<ExprPtrVariant> initializer)
-    -> StmtPtrVariant {
-  return std::make_unique<VarStmt>(varName, std::move(initializer));
 }
 
 auto createIfSPV(ExprPtrVariant condition, StmtPtrVariant thenBranch,
@@ -218,23 +180,8 @@ auto createForSPV(std::optional<StmtPtrVariant> initializer,
                                    std::move(increment), std::move(loopBody));
 }
 
-auto createFuncSPV(Token fName, FuncExprPtr funcExpr) -> StmtPtrVariant {
-  return std::make_unique<FuncStmt>(std::move(fName), std::move(funcExpr));
-}
-
-auto createRetSPV(Token ret, std::optional<ExprPtrVariant> value)
-    -> StmtPtrVariant {
-  return std::make_unique<RetStmt>(std::move(ret), std::move(value));
-}
-
-auto createClassSPV(Token className, std::optional<ExprPtrVariant> superClass,
-                    std::vector<StmtPtrVariant> methods) -> StmtPtrVariant {
-  return std::make_unique<ClassStmt>(std::move(className),
-                                     std::move(superClass), std::move(methods));
-}
-
-auto createBreakSPV() -> StmtPtrVariant {
-  return std::make_unique<BreakStmt>();
+auto createBreakSPV(Token name) -> StmtPtrVariant {
+  return std::make_unique<BreakStmt>(name);
 }
 
 }  // namespace cpplox::AST

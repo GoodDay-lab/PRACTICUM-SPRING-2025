@@ -9,6 +9,11 @@
 #include "ErrorReporter.h"
 #include "Token.h"
 
+struct BreakException : std::exception {
+    int line;
+    explicit BreakException(int l) : line(l) {};
+};
+
 namespace cpplox::ErrorsAndDebug {
 
 using Types::Token;

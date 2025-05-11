@@ -61,8 +61,12 @@ enum class TokenType {
   WHILE,
   INTW,
   STRINGW,
+  REALW,
   BREAK,
   CONTINUE,
+  WRITE,
+  READ,
+  PROGRAM,
 
   LOX_EOF
 };

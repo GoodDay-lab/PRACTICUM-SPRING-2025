@@ -52,15 +52,6 @@ auto RDParser::consumeOneLiteral() -> ExprPtrVariant {
   return AST::createLiteralEPV(getTokenAndAdvance().getOptionalLiteral());
 }
 
-auto RDParser::consumeSuper() -> ExprPtrVariant {
-  Token super = getTokenAndAdvance();
-  consumeOrError(TokenType::DOT, "Expected a '.' after 'super' keyword");
-  if (!match(TokenType::IDENTIFIER))
-    throw error("Expected an identifier after 'super.' ");
-  Token method = getTokenAndAdvance();
-  return AST::createSuperEPV(std::move(super), std::move(method));
-}
-
 auto RDParser::consumeGroupingExpr() -> ExprPtrVariant {
   advance();
   ExprPtrVariant expr = expression();
@@ -68,13 +59,6 @@ auto RDParser::consumeGroupingExpr() -> ExprPtrVariant {
                  std::to_string(peek().getLine())
                      + " Expected a closing paren after expression.");
   return AST::createGroupingEPV(std::move(expr));
-}
-
-auto RDParser::consumePostfixExpr(ExprPtrVariant expr) -> ExprPtrVariant {
-  while (match({TokenType::PLUS_PLUS, TokenType::MINUS_MINUS})) {
-    expr = AST::createPostfixEPV(std::move(expr), getTokenAndAdvance());
-  }
-  return expr;
 }
 
 auto RDParser::consumeUnaryExpr() -> ExprPtrVariant {
@@ -144,14 +128,14 @@ void RDParser::synchronize() {
   while (!isAtEnd()) {
     switch (getCurrentTokenType()) {
       case TokenType::SEMICOLON: advance(); return;
-      case TokenType::CLASS:
-      case TokenType::FUN:
-      case TokenType::VAR:
+      case TokenType::INTW:
+      case TokenType::STRINGW:
+      case TokenType::REALW:
       case TokenType::FOR:
       case TokenType::IF:
       case TokenType::WHILE:
-      case TokenType::PRINT:
-      case TokenType::RETURN: return;
+      case TokenType::WRITE:
+      case TokenType::READ: return;
       default:
         ErrorsAndDebug::debugPrint("Discarding extranuous token:"
                                    + peek().getLexeme());
@@ -191,46 +175,46 @@ void RDParser::throwOnErrorProductions() {
 // program     → declaration* LOX_EOF;
 void RDParser::program() {
   try {
-    while (!isAtEnd()) {
-      std::optional<StmtPtrVariant> optStmt = declaration();
-      if (optStmt.has_value()) statements.push_back(std::move(optStmt.value()));
+    consumeOrError(TokenType::PROGRAM, "Expected program keyword");
+    consumeOrError(TokenType::LEFT_BRACE, "Expected \'{\' bracket");
+    while (!isAtEnd() && match({TokenType::INTW, TokenType::STRINGW, TokenType::REALW})) {
+      declaration();
     }
+
+    while (!isAtEnd() && !match(TokenType::RIGHT_BRACE)) {
+      std::optional<StmtPtrVariant> optStmt = std::make_optional(statement());
+      if (optStmt.has_value())
+        statements.push_back(std::move(optStmt.value()));
+    }
+    consumeOrError(TokenType::RIGHT_BRACE, "Expected \'}\' bracket");
   } catch (const std::exception& e) {
     std::string errorMessage = "Caught unhandled exception: ";
     errorMessage += e.what();
     eReporter.setError(peek().getLine(), errorMessage);
+  } catch (const RDParseError& e) {
+    std::string errorMessage = "Caught unhandled parse error: ";
+    eReporter.setError(peek().getLine(), errorMessage);
   }
 }
-// declaration → varDecl | funcDecl | classDecl | statement;
+// declaration → intDecl | strDecl | realDecl ;
 auto RDParser::declaration() -> std::optional<StmtPtrVariant> {
   try {
-    if (match(TokenType::VAR)) {
-      advance();
-      return varDecl();
-    }
-
     if (match(TokenType::STRINGW)) {
       advance();
-      return strDecl();
+      strDecl();
     }
 
     if (match(TokenType::INTW)) {
       advance();
-      return intDecl();
+      intDecl();
     }
 
-    if (match(TokenType::FUN) && matchNext(TokenType::IDENTIFIER)) {
+    if (match(TokenType::REALW)) {
       advance();
-      return funcDecl("function");
+      realDecl();
     }
 
-    if (match(TokenType::CLASS)) {
-      advance();
-      return classDecl();
-    }
-
-    return statement();
-
+    return std::nullopt;
   } catch (const RDParseError& e) {
     ErrorsAndDebug::debugPrint(
         "Caught ParseError; Calling synchronize. Current Token:"
@@ -240,141 +224,72 @@ auto RDParser::declaration() -> std::optional<StmtPtrVariant> {
   }
 }
 
-// varDecl     → "var" IDENTIFIER ("=" expression)? ";" ;
-auto RDParser::varDecl() -> StmtPtrVariant {
-  if (match(TokenType::IDENTIFIER)) {
-    Token varName = getTokenAndAdvance();
-    std::optional<ExprPtrVariant> intializer = std::nullopt;
-    if (match(TokenType::EQUAL)) {
-      advance();
-      intializer = expression();
-    }
-    consumeSemicolonOrError();
-    return AST::createVarSPV(varName, std::move(intializer));
-  }
-  throw error("Expected a variable name after the var keyword");
-}
-
 // strDecl     → "string" IDENTIFIER ("=" expression)? ";" ;
-auto RDParser::strDecl() -> StmtPtrVariant {
-  if (match(TokenType::IDENTIFIER)) {
-    Token varName = getTokenAndAdvance();
-    std::optional<ExprPtrVariant> intializer = std::nullopt;
-    if (match(TokenType::EQUAL)) {
+auto RDParser::strDecl() -> void {
+  do {
+    if (match(TokenType::COMMA))
       advance();
-      intializer = expression();
-    }
-    consumeSemicolonOrError();
-    return AST::createVarSPV(varName, std::move(intializer));
-  }
-  throw error("Expected a variable name after the var keyword");
+    if (match(TokenType::IDENTIFIER)) {
+      Token varName = getTokenAndAdvance();
+      std::optional<ExprPtrVariant> intializer = std::nullopt;
+      if (match(TokenType::EQUAL)) {
+        advance();
+        intializer = assignment();
+      }
+      statements.push_back(AST::createStrSPV(varName, std::move(intializer)));
+    } else
+      throw error("Expected a variable name after the str keyword");
+  } while (match(TokenType::COMMA));
+  consumeSemicolonOrError();
 }
 
 // intDecl     → "int" IDENTIFIER ("=" expression)? ";" ;
-auto RDParser::intDecl() -> StmtPtrVariant {
-  if (match(TokenType::IDENTIFIER)) {
-    Token varName = getTokenAndAdvance();
-    std::optional<ExprPtrVariant> intializer = std::nullopt;
-    if (match(TokenType::EQUAL)) {
-      advance();
-      intializer = expression();
-    }
-    consumeSemicolonOrError();
-    return AST::createVarSPV(varName, std::move(intializer));
-  }
-  throw error("Expected a variable name after the var keyword");
-}
-
-// parameters → IDENTIFIER ( "," IDENTIFIER )* ;
-auto RDParser::parameters() -> std::vector<Token> {
-  std::vector<Token> params;
+auto RDParser::intDecl() -> void {
   do {
-    if (peek().getType() != TokenType::IDENTIFIER)
-      throw error("Expected an indentifier for parameter.");
-    params.emplace_back(getTokenAndAdvance());
-  } while ([this]() -> bool {
-    if (match(TokenType::COMMA)) {
+    if (match(TokenType::COMMA))
       advance();
-      return true;
-    }
-    return false;
-  }());
-  return params;
-}
-// funcBody     → "(" parameters? ")" "{" declaration "}";
-auto RDParser::funcBody(const std::string& kind) -> ExprPtrVariant {
-  consumeOrError(TokenType::LEFT_PAREN, "Expecte '(' after " + kind + " decl.");
-  // Grab any parameters for the function
-  std::vector<Token> params
-      = match(TokenType::RIGHT_PAREN) ? std::vector<Token>() : parameters();
-  consumeOrError(TokenType::RIGHT_PAREN,
-                 "Expecte ')' after " + kind + " params.");
-  consumeOrError(TokenType::LEFT_BRACE,
-                 "Expecte '{' after " + kind + " params.");
-  std::vector<StmtPtrVariant> fnBody;
-  while (!match(TokenType::RIGHT_BRACE) && !isAtEnd()) {
-    if (auto optStmnt = declaration(); optStmnt.has_value())
-      fnBody.push_back(std::move(optStmnt.value()));
-  }
-  consumeOrError(TokenType::RIGHT_BRACE,
-                 "Expecte '}' after " + kind + " body.");
-  return AST::createFuncEPV(std::move(params), std::move(fnBody));
-}
-
-// funcDecl    → IDENTIFIER funcBody;
-auto RDParser::funcDecl(const std::string& kind) -> StmtPtrVariant {
-  if (match(TokenType::IDENTIFIER)) {
-    // Get the name outside or GCC produces invalid code.
-    Token funcName = getTokenAndAdvance();
-    return AST::createFuncSPV(funcName,
-                              std::get<AST::FuncExprPtr>(funcBody(kind)));
-  }
-  throw error("Expected a " + kind + " name after the fun keyword");
-}
-
-// classDecl   → "class" IDENTIFIER ("<" IDENTIFIER)? "{" funcDecl* "}" ;
-auto RDParser::classDecl() -> StmtPtrVariant {
-  if (match(TokenType::IDENTIFIER)) {
-    Token className = getTokenAndAdvance();
-
-    std::optional<ExprPtrVariant> superClass
-        = [&]() -> std::optional<ExprPtrVariant> {
-      if (match(TokenType::LESS)) {
+    if (match(TokenType::IDENTIFIER)) {
+      Token varName = getTokenAndAdvance();
+      std::optional<ExprPtrVariant> intializer = std::nullopt;
+      if (match(TokenType::EQUAL)) {
         advance();
-        if (match(TokenType::IDENTIFIER)) {
-          auto superClassVar = consumeVarExpr();
-          if ((std::get<AST::VariableExprPtr>(superClassVar)
-                   ->varName.getLexeme()
-               == className.getLexeme()))
-            throw error("A class can't inherit from itself");
-          return superClassVar;
-        }
-        throw error("Expected a superclass name after '<'");
+        intializer = assignment();
       }
-      return std::nullopt;
-    }();
-
-    consumeOrError(TokenType::LEFT_BRACE, "Expecte '{' after class name.");
-    std::vector<StmtPtrVariant> methods;
-    while (!match(TokenType::RIGHT_BRACE) && !isAtEnd()) {
-      methods.push_back(funcDecl("method"));
-    }
-    consumeOrError(TokenType::RIGHT_BRACE, "Expecte '}' after class body.");
-    return AST::createClassSPV(std::move(className), std::move(superClass),
-                               std::move(methods));
-  }
-  throw error("Expected a name after the class keyword");
+      statements.push_back(AST::createIntSPV(varName, std::move(intializer)));
+    } else 
+      throw error("Expected a variable name after the int keyword");
+  } while (match(TokenType::COMMA));
+  consumeSemicolonOrError();
 }
 
-// statement   → exprStmt | printStmt | blockStmt | ifStmt | whileStmt |
+// realDecl     → "real" IDENTIFIER ("=" expression)? ";" ;
+auto RDParser::realDecl() -> void {
+  do {
+    if (match(TokenType::COMMA))
+      advance();
+    if (match(TokenType::IDENTIFIER)) {
+      Token varName = getTokenAndAdvance();
+      std::optional<ExprPtrVariant> intializer = std::nullopt;
+      if (match(TokenType::EQUAL)) {
+        advance();
+        intializer = assignment();
+      }
+      statements.push_back(AST::createRealSPV(varName, std::move(intializer)));
+    } else
+      throw error("Expected a variable name after the real keyword");
+  } while (match(TokenType::COMMA));
+  consumeSemicolonOrError();
+}
+
+// statement   → exprStmt | writeStmt | readStmt | blockStmt | ifStmt | whileStmt |
 // statement   → forStmt;
 auto RDParser::statement() -> StmtPtrVariant {
-  if (match(TokenType::PRINT)) return printStmt();
+  if (match(TokenType::WRITE)) return writeStmt();
+  if (match(TokenType::READ)) return readStmt();
   if (match(TokenType::LEFT_BRACE)) return blockStmt();
   if (match(TokenType::IF)) return ifStmt();
   if (match(TokenType::WHILE)) return whileStmt();
   if (match(TokenType::FOR)) return forStmt();
-  if (match(TokenType::RETURN)) return returnStmt();
   if (match(TokenType::BREAK)) return breakStmt();
   return exprStmt();
 }
@@ -386,12 +301,33 @@ auto RDParser::exprStmt() -> StmtPtrVariant {
   return AST::createExprSPV(std::move(expr));
 }
 
-// printStmt   → "print" expression ';' ;
-auto RDParser::printStmt() -> StmtPtrVariant {
+// writeStmt   → "write(<expression>, ...);" ;
+auto RDParser::writeStmt() -> StmtPtrVariant {
   advance();
-  ExprPtrVariant printExpr = expression();
+  std::vector<ExprPtrVariant> exprs;
+  consumeOrError(TokenType::LEFT_PAREN, "Expected \'(\'"); 
+  ExprPtrVariant printExpr = assignment();
+  exprs.push_back(std::move(printExpr));
+  while (match(TokenType::COMMA)) {
+    advance();
+    printExpr = assignment();
+    exprs.push_back(std::move(printExpr));
+  }
+  consumeOrError(TokenType::RIGHT_PAREN, "Expected \')\'");
   consumeSemicolonOrError();
-  return AST::createPrintSPV(std::move(printExpr));
+  return AST::createWriteSPV(std::move(exprs));
+}
+
+// readStmt   → "read(<identifier>);" ;
+auto RDParser::readStmt() -> StmtPtrVariant {
+  advance();
+  consumeOrError(TokenType::LEFT_PAREN, "Expected \'(\'");
+  consumeOrError(TokenType::IDENTIFIER, "Expected a variable name");
+  --currentIter;
+  Token name = getTokenAndAdvance();
+  consumeOrError(TokenType::RIGHT_PAREN, "Expected \')\'");
+  consumeSemicolonOrError();
+  return AST::createReadSPV(name);
 }
 
 // blockStmt   → "{" declaration "}"
@@ -400,8 +336,8 @@ auto RDParser::blockStmt() -> StmtPtrVariant {
   advance();  // consume '{'
   std::vector<StmtPtrVariant> statements;
   while (!match(TokenType::RIGHT_BRACE) && !isAtEnd()) {
-    auto optStmnt = declaration();
-    if (optStmnt.has_value()) statements.push_back(std::move(optStmnt.value()));
+    auto optStmnt = statement();
+    statements.push_back(std::move(optStmnt));
   }
   consumeOrError(TokenType::RIGHT_BRACE, "Expect '}' after block");
   return AST::createBlockSPV(std::move(statements));
@@ -448,9 +384,6 @@ auto RDParser::forStmt() -> StmtPtrVariant {
   std::optional<StmtPtrVariant> initializer = std::nullopt;
   if (match(TokenType::SEMICOLON)) {
     advance();
-  } else if (match(TokenType::VAR)) {
-    advance();
-    initializer = std::make_optional(varDecl());
   } else {
     initializer = std::make_optional(exprStmt());
   }
@@ -473,22 +406,12 @@ auto RDParser::forStmt() -> StmtPtrVariant {
                            std::move(increment), std::move(loopBody));
 }
 
-// returnStmt  → "return" (expression)? ";";
-auto RDParser::returnStmt() -> StmtPtrVariant {
-  Token ret = getTokenAndAdvance();
-  std::optional<AST::ExprPtrVariant> value = std::nullopt;
-  if (!match(TokenType::SEMICOLON)) {
-    value = expression();
-  }
-  consumeSemicolonOrError();
-  return AST::createRetSPV(std::move(ret), std::move(value));
-}
-
 // breakStmt
 auto RDParser::breakStmt() -> StmtPtrVariant {
+  Token name = peek();
   advance();
   consumeSemicolonOrError();
-  return AST::createBreakSPV();
+  return AST::createBreakSPV(name);
 }
 
 //=============//
@@ -507,7 +430,7 @@ auto RDParser::comma() -> ExprPtrVariant {
                                &RDParser::assignment);
 }
 
-// assignment  → (call ".")? IDENTIFIER "=" assignment | condititional;
+// assignment  → IDENTIFIER "=" assignment | condititional;
 auto RDParser::assignment() -> ExprPtrVariant {
   ExprPtrVariant expr = conditional();
 
@@ -516,14 +439,6 @@ auto RDParser::assignment() -> ExprPtrVariant {
     if (std::holds_alternative<AST::VariableExprPtr>(expr)) {
       Token varName = std::get<AST::VariableExprPtr>(expr)->varName;
       return AST::createAssignmentEPV(varName, assignment());
-    }
-    if (std::holds_alternative<AST::GetExprPtr>(expr)) {
-      // Discard the last GetExpr. The property won't be found in the object as
-      // we haven't set it yet (this operation). Instead replace it with a
-      // SetExpr
-      auto& getExpr = std::get<AST::GetExprPtr>(expr);
-      return AST::createSetEPV(std::move(getExpr->expr),
-                               std::move(getExpr->name), assignment());
     }
     throw error("Invalid assignment target");
   }
@@ -593,62 +508,15 @@ auto RDParser::multiplication() -> ExprPtrVariant {
   return consumeAnyBinaryExprs(multTypes, unary(), &RDParser::unary);
 }
 
-// unary      → ("!" | "-" | "--" | "++") unary | postfix;
+// unary      → ("!" | "-" | "--" | "++") unary | primary;
 auto RDParser::unary() -> ExprPtrVariant {
-  auto unaryTypes = {TokenType::BANG, TokenType::MINUS, TokenType::PLUS_PLUS,
-                     TokenType::MINUS_MINUS};
+  auto unaryTypes = {TokenType::BANG, TokenType::MINUS};
   if (match(unaryTypes)) return consumeUnaryExpr();
-  return postfix();
-}
-
-// postfix    → primary ("++" | "--")*;
-auto RDParser::postfix() -> ExprPtrVariant {
-  return consumePostfixExpr(call());
-}
-
-// call        → primary ( "(" arguments? ")" | "." IDENTIFIER )*;
-auto RDParser::call() -> ExprPtrVariant {
-  auto expr = primary();
-  while (true) {
-    if (match(TokenType::LEFT_PAREN)) {
-      advance();
-      std::vector<ExprPtrVariant> args;
-      if (!match(TokenType::RIGHT_PAREN)) args = arguments();
-      if (!match(TokenType::RIGHT_PAREN))
-        throw error("Expected ')' after function invocation.");
-      expr = createCallEPV(std::move(expr), getTokenAndAdvance(),
-                           std::move(args));
-    } else if (match(TokenType::DOT)) {
-      advance();
-      Token name = match(TokenType::IDENTIFIER)
-                       ? getTokenAndAdvance()
-                       : throw error("Expected a name after '.'.");
-      expr = createGetEPV(std::move(expr), std::move(name));
-    } else {
-      break;
-    }
-  }
-  return expr;
-}
-
-// Go to assignment to avoid comma
-// arguments   → assignment  ( "," assignment )* ;
-auto RDParser::arguments() -> std::vector<ExprPtrVariant> {
-  std::vector<ExprPtrVariant> args;
-  args.push_back(assignment());
-  while (match(TokenType::COMMA)) {
-    advance();
-    if (args.size() >= MAX_ARGS)
-      throw error("A function can't be invoked with more than 255 arguments");
-    args.push_back(assignment());
-  }
-  return args;
+  return primary();
 }
 
 // primary    → NUMBER | STRING | "false" | "true" | "nil";
 // primary    →  "(" expression ")" | IDENTIFIER;
-// primary     → "fun" funBody;
-// primary     → "super" "." IDENTIFIER;
 //  Error Productions:
 // primary    → ("!=" | "==") equality
 // primary    → (">" | ">=" | "<" | "<=") comparison
@@ -661,10 +529,7 @@ auto RDParser::primary() -> ExprPtrVariant {
   if (match(TokenType::NUMBER)) return consumeOneLiteral();
   if (match(TokenType::STRING)) return consumeOneLiteral();
   if (match(TokenType::LEFT_PAREN)) return consumeGroupingExpr();
-  if (match(TokenType::THIS)) return AST::createThisEPV(getTokenAndAdvance());
   if (match(TokenType::IDENTIFIER)) return consumeVarExpr();
-  if (match(TokenType::FUN)) return funcBody("Anon-Function");
-  if (match(TokenType::SUPER)) return consumeSuper();
 
   // Check for known error productions. throws RDParseError;
   throwOnErrorProductions();

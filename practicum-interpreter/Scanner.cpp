@@ -34,7 +34,10 @@ auto ReservedOrIdentifier(const std::string& str) -> TokenType {
       {"this", TokenType::THIS},     {"true", TokenType::LOX_TRUE},
       {"var", TokenType::VAR},       {"while", TokenType::WHILE},
       {"int", TokenType::INTW},      {"string", TokenType::STRINGW},
-      {"break", TokenType::BREAK},   {"continue", TokenType::CONTINUE}};
+      {"break", TokenType::BREAK},   {"continue", TokenType::CONTINUE},
+      {"real", TokenType::REALW},    {"program", TokenType::PROGRAM},
+      {"write", TokenType::WRITE},   {"read", TokenType::READ}
+  };
 
   auto iter = lookUpTable.find(str);
   if (iter == lookUpTable.end()) {

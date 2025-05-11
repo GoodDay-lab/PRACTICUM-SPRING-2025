@@ -57,7 +57,11 @@ auto TokenTypeString(const TokenType value) -> const std::string& {
       {TokenType::INTW, "INT"},
       {TokenType::STRINGW, "STRINGW"},
       {TokenType::BREAK, "BREAK"},
-      {TokenType::CONTINUE, "CONTINUE"}
+      {TokenType::CONTINUE, "CONTINUE"},
+      {TokenType::REALW, "REALW"},
+      {TokenType::WRITE, "WRITE"},
+      {TokenType::READ, "READ"},
+      {TokenType::PROGRAM, "PROGRAM"}
   };
 
   return lookUpTable.find(value)->second;

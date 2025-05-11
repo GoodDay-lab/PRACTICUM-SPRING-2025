@@ -160,6 +160,9 @@ void InterpreterDriver::interpret(const std::string& source) {
       eReporter.printToStdErr();
     }
     return;
+  } catch (const BreakException& e) {
+    eReporter.setError(e.line, "Got break statement out of loop");
+    eReporter.printToStdErr();
   }
 }
 

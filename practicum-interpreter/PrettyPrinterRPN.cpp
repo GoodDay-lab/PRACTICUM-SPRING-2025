@@ -57,12 +57,6 @@ auto printConditionalExpr(const PrettyPrinterRPN& printer,
          + printer.toString(expr->thenBranch) + " "
          + printer.toString(expr->elseBranch) + "  ?:";
 }
-
-auto printPostfixExpr(const PrettyPrinterRPN& printer,
-                      const PostfixExprPtr& expr) -> std::string {
-  return printer.toString(expr->left) + " " + expr->op.getLexeme();
-}
-
 }  // namespace
 
 auto PrettyPrinterRPN::toString() -> std::string {
@@ -83,8 +77,6 @@ auto PrettyPrinterRPN::toString(const ExprPtrVariant& expression) const
       return printUnaryExpr(*this, std::get<3>(expression));
     case 4:  // ConditionalExpr
       return printConditionalExpr(*this, std::get<4>(expression));
-    case 5:  // PostfixExpr
-      return printPostfixExpr(*this, std::get<5>(expression));
     default:
       static_assert(std::variant_size_v<ExprPtrVariant>,
                     "Looks like you forgot to update the cases in "

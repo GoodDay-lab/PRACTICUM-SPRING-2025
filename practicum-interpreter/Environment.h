@@ -27,13 +27,15 @@ class Environment : public Types::Uncopyable,
   explicit Environment(EnvironmentPtr parentEnviron);
 
   auto assign(size_t hashedVarName, LoxObject object) -> bool;
-  void define(size_t hashedVarName, LoxObject object);
+  void define(size_t hashedVarName, LoxObject object, size_t t = 3);
   auto get(size_t hashedVarName) -> LoxObject;
+  auto get_T(size_t hashedVarName) -> size_t;
   auto getParentEnv() -> EnvironmentPtr;
   auto isGlobal() -> bool;
 
  private:
   std::map<size_t, LoxObject> objects;
+  std::map<size_t, size_t> objects_T;
   EnvironmentPtr parentEnviron = nullptr;
 };
 
@@ -45,10 +47,12 @@ class EnvironmentManager : public Types::Uncopyable {
   void createNewEnviron(const std::string& caller = __builtin_FUNCTION());
   void discardEnvironsTill(const Environment::EnvironmentPtr& environToRestore,
                            const std::string& caller = __builtin_FUNCTION());
-  void define(const std::string& tokenStr, LoxObject object);
-  void define(const Types::Token& varToken, LoxObject object);
+  void define(const std::string& tokenStr, LoxObject object, size_t t = 3);
+  void define(const Types::Token& varToken, LoxObject object, size_t t = 3);
   auto get(const Types::Token& varToken) -> LoxObject;
   auto get(const std::string& varToken) -> LoxObject;
+  auto get_T(const Types::Token& varToken) -> size_t;
+  auto get_T(const std::string& varToken) -> size_t; 
   auto getCurrEnv() -> Environment::EnvironmentPtr;
   void setCurrEnv(Environment::EnvironmentPtr newCurr,
                   const std::string& caller = __builtin_FUNCTION());

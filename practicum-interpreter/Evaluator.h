@@ -17,32 +17,25 @@
 namespace cpplox::Evaluator {
 using AST::AssignmentExprPtr;
 using AST::BinaryExprPtr;
-using AST::CallExprPtr;
 using AST::ConditionalExprPtr;
 using AST::ExprPtrVariant;
-using AST::FuncExprPtr;
-using AST::FuncStmtPtr;
-using AST::GetExprPtr;
 using AST::GroupingExprPtr;
 using AST::LiteralExprPtr;
 using AST::LogicalExprPtr;
-using AST::PostfixExprPtr;
-using AST::SetExprPtr;
-using AST::SuperExprPtr;
-using AST::ThisExprPtr;
 using AST::UnaryExprPtr;
 using AST::VariableExprPtr;
 
 using AST::BlockStmtPtr;
 using AST::BreakStmtPtr;
-using AST::ClassStmtPtr;
 using AST::ExprStmtPtr;
 using AST::ForStmtPtr;
 using AST::IfStmtPtr;
-using AST::PrintStmtPtr;
-using AST::RetStmtPtr;
+using AST::WriteStmtPtr;
+using AST::ReadStmtPtr;
 using AST::StmtPtrVariant;
-using AST::VarStmtPtr;
+using AST::IntStmtPtr;
+using AST::StrStmtPtr;
+using AST::RealStmtPtr;
 using AST::WhileStmtPtr;
 
 using ErrorsAndDebug::ErrorReporter;
@@ -69,34 +62,25 @@ class Evaluator {
   static auto evaluateLiteralExpr(const LiteralExprPtr& expr) -> LoxObject;
   auto evaluateUnaryExpr(const UnaryExprPtr& expr) -> LoxObject;
   auto evaluateConditionalExpr(const ConditionalExprPtr& expr) -> LoxObject;
-  auto evaluatePostfixExpr(const PostfixExprPtr& expr) -> LoxObject;
   auto evaluateVariableExpr(const VariableExprPtr& expr) -> LoxObject;
   auto evaluateAssignmentExpr(const AssignmentExprPtr& expr) -> LoxObject;
   auto evaluateLogicalExpr(const LogicalExprPtr& expr) -> LoxObject;
-  auto evaluateCallExpr(const CallExprPtr& expr) -> LoxObject;
-  auto evaluateFuncExpr(const FuncExprPtr& expr) -> LoxObject;
-  auto evaluateGetExpr(const GetExprPtr& expr) -> LoxObject;
-  auto evaluateSetExpr(const SetExprPtr& expr) -> LoxObject;
-  auto evaluateThisExpr(const ThisExprPtr& expr) -> LoxObject;
-  auto evaluateSuperExpr(const SuperExprPtr& expr) -> LoxObject;
-
+  
   // evaluation functions for Stmt types
   auto evaluateExprStmt(const ExprStmtPtr& stmt) -> std::optional<LoxObject>;
-  auto evaluatePrintStmt(const PrintStmtPtr& stmt) -> std::optional<LoxObject>;
+  auto evaluateWriteStmt(const WriteStmtPtr& stmt) -> std::optional<LoxObject>;
+  auto evaluateReadStmt(const ReadStmtPtr& stmt) -> std::optional<LoxObject>;
   auto evaluateBlockStmt(const BlockStmtPtr& stmt) -> std::optional<LoxObject>;
-  auto evaluateVarStmt(const VarStmtPtr& stmt) -> std::optional<LoxObject>;
+  auto evaluateIntStmt(const IntStmtPtr& stmt) -> std::optional<LoxObject>;
+  auto evaluateStrStmt(const StrStmtPtr& stmt) -> std::optional<LoxObject>;
+  auto evaluateRealStmt(const RealStmtPtr& stmt) -> std::optional<LoxObject>;
   auto evaluateIfStmt(const IfStmtPtr& stmt) -> std::optional<LoxObject>;
   auto evaluateWhileStmt(const WhileStmtPtr& stmt) -> std::optional<LoxObject>;
   auto evaluateForStmt(const ForStmtPtr& stmt) -> std::optional<LoxObject>;
-  auto evaluateFuncStmt(const FuncStmtPtr& stmt) -> std::optional<LoxObject>;
-  auto evaluateRetStmt(const RetStmtPtr& stmt) -> std::optional<LoxObject>;
-  auto evaluateClassStmt(const ClassStmtPtr& stmt) -> std::optional<LoxObject>;
   auto evaluateBreakStmt(const BreakStmtPtr& stmt) -> std::optional<LoxObject>;
 
   // throws RuntimeError if right isn't a double
   auto getDouble(const Token& token, const LoxObject& right) -> double;
-  auto bindInstance(const FuncShrdPtr& method, LoxInstanceShrdPtr instance)
-      -> FuncShrdPtr;
 
   ErrorReporter& eReporter;
   EnvironmentManager environManager;
